@@ -1,3 +1,4 @@
+%%{init: {'theme':'base','themeVariables': {'background':'#061A2E','primaryTextColor':'#EAF7FF','lineColor':'#8EC9E8','edgeLabelBackground':'#102E50','fontFamily':'Arial'}}}%%
 flowchart TB
     subgraph PARTNERS["Healthcare partner"]
         H["Hospital PACS / imaging team<br/>DICOM MRI or CT"]
@@ -46,11 +47,15 @@ flowchart TB
 
     H --> AUTHI
     V --> AUTHI
+    VIEW ~~~ TF
 
-    subgraph CONTROL["Control plane"]
+    subgraph CONTROL["5. Cross-cutting operations & cost controls"]
+        direction TB
         TF["Terraform + GitHub Actions"]
-        SEC["S3 managed encryption<br/>IAM least privilege"]
-        OPS["CloudTrail event history<br/>CloudWatch 7-day logs<br/>$1.50 monthly tagged budget"]
+        SEC["S3 encryption + versioning<br/>public access blocked"]
+        IAM["Least-privilege IAM<br/>HealthImaging import role"]
+        OPS["CloudWatch 7-day logs<br/>CloudTrail event history"]
+        BUD["$1.50 monthly tagged budget<br/>80% alert"]
     end
 
     classDef partner fill:#DCEEFF,stroke:#2276C9,color:#092E59,stroke-width:2px;
@@ -65,4 +70,13 @@ flowchart TB
     class CLIN,QUAR,HIM,AUDIT governed;
     class EVT,FLOW,PROV,FUTURE process;
     class DER,AUTHD,API,VIEW delivery;
-    class TF,SEC,OPS control;
+    class TF,SEC,IAM,OPS,BUD control;
+
+    style PARTNERS fill:#0B2944,stroke:#4BA3D9,color:#EAF7FF,stroke-width:2px
+    style AWS fill:#061A2E,stroke:#3D9ED0,color:#EAF7FF,stroke-width:3px
+    style INTAKE fill:#103B5B,stroke:#5BB8E6,color:#EAF7FF,stroke-width:2px
+    style GOVERNED fill:#0D344F,stroke:#49A7B9,color:#EAF7FF,stroke-width:2px
+    style PROCESS fill:#122E58,stroke:#729EEA,color:#EAF7FF,stroke-width:2px
+    style DELIVERY fill:#123B52,stroke:#61B8C8,color:#EAF7FF,stroke-width:2px
+    style CONTROL fill:#08243D,stroke:#3D9ED0,color:#EAF7FF,stroke-width:2px
+    linkStyle default stroke:#8EC9E8,stroke-width:2px
