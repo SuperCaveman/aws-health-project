@@ -1,0 +1,67 @@
+flowchart LR
+    subgraph Partners["Healthcare partners"]
+        H["🏥 Hospital PACS<br/>DICOM MRI / CT"]
+        L["🧪 Lab / clinical system<br/>FHIR • EDC • reports"]
+        V["🤝 Vendor / imaging site<br/>secure transfer"]
+    end
+
+    subgraph AWS["☁️ AWS HealthOps environment"]
+        direction LR
+        subgraph Intake["🟠 1. Secure intake"]
+            ING["Authenticated intake<br/>API Gateway / SFTP"]
+            IN["S3 inbound zone"]
+            Q["Quarantine + validation<br/>Lambda / Step Functions"]
+            ING --> IN --> Q
+        end
+        subgraph Governed["🟢 2. Governed healthcare data"]
+            CLIN["S3 clinical-source zone<br/>encrypted • versioned"]
+            HIM["AWS HealthImaging<br/>DICOM study / series"]
+            AUDIT["Audit / evidence zone<br/>CloudTrail events"]
+            Q --> CLIN --> HIM
+        end
+        subgraph Processing["🟣 3. Controlled processing"]
+            EVT["EventBridge"]
+            FLOW["Step Functions<br/>processing workflow"]
+            SEG["Segmentation workload<br/>future SageMaker / MONAI"]
+            DER["S3 derived-assets zone<br/>DICOM SEG • GLB • STL"]
+            HIM --> EVT --> FLOW --> SEG --> DER
+        end
+        subgraph Delivery["🟡 4. Controlled delivery"]
+            AUTH["Cognito + IAM<br/>role authorization"]
+            API["HealthOps API"]
+            WEB["Web / clinical viewer"]
+            UE["Unreal visualization<br/>derived assets only"]
+            DER --> API
+            AUTH --> API
+            API --> WEB
+            API --> UE
+        end
+    end
+
+    H --> ING
+    L --> ING
+    V --> ING
+
+    subgraph Controls["🔵 Control plane across every stage"]
+        TF["Terraform + CI/CD"]
+        SEC["KMS encryption • IAM least privilege<br/>data-zone policy enforcement"]
+        OPS["CloudWatch • Config • Security Hub<br/>GuardDuty • Backup • Budgets"]
+    end
+
+    Q -. validation result .-> AUDIT
+    FLOW -. processing provenance .-> AUDIT
+    API -. access event .-> AUDIT
+
+    classDef partner fill:#DCEEFF,stroke:#2276C9,color:#092E59,stroke-width:2px;
+    classDef intake fill:#FFF0DB,stroke:#E67E22,color:#6B3200,stroke-width:2px;
+    classDef governed fill:#DCF4E5,stroke:#218B4B,color:#0D3C20,stroke-width:2px;
+    classDef processing fill:#EEE2FF,stroke:#7F4BC7,color:#35105E,stroke-width:2px;
+    classDef delivery fill:#FFF7CC,stroke:#D4A800,color:#5C4700,stroke-width:2px;
+    classDef controls fill:#D9F2F5,stroke:#16808A,color:#053B41,stroke-width:2px;
+
+    class H,L,V partner;
+    class ING,IN,Q intake;
+    class CLIN,HIM,AUDIT governed;
+    class EVT,FLOW,SEG,DER processing;
+    class AUTH,API,WEB,UE delivery;
+    class TF,SEC,OPS controls;

@@ -1,0 +1,15 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
+
+# Local tooling and generated artifacts
+.env
+.DS_Store
+*.png
+*.jpg
+*.jpeg
+*.svg
