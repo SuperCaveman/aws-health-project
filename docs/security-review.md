@@ -1,6 +1,6 @@
 # HealthOps security review
 
-**Review date:** 2026-08-15  
+**Review date:** 2026-08-15
 **Scope:** The Terraform configuration, Lambda source, GitHub Actions workflow, and the deployed lean MVP in `us-east-1`.
 
 ## Verified baseline
