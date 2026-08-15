@@ -37,6 +37,36 @@ resource "aws_s3_bucket_public_access_block" "zone" {
   restrict_public_buckets = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "zone" {
+  for_each = aws_s3_bucket.zone
+  bucket   = each.value.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_policy" "deny_insecure_transport" {
+  for_each = aws_s3_bucket.zone
+  bucket   = each.value.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "DenyInsecureTransport"
+      Effect    = "Deny"
+      Principal = "*"
+      Action    = "s3:*"
+      Resource  = [each.value.arn, "${each.value.arn}/*"]
+      Condition = {
+        Bool = {
+          "aws:SecureTransport" = "false"
+        }
+      }
+    }]
+  })
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "zone" {
   for_each = aws_s3_bucket.zone
   bucket   = each.value.id
@@ -143,6 +173,11 @@ resource "aws_cloudwatch_log_group" "intake" {
 
 resource "aws_cloudwatch_log_group" "validate_intake" {
   name              = "/aws/lambda/${var.project_name}-validate-intake"
+  retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/apigateway/${var.project_name}-delivery"
   retention_in_days = 7
 }
 
@@ -481,6 +516,7 @@ resource "aws_cloudwatch_event_target" "healthimaging_import_complete" {
 resource "aws_cognito_user_pool" "viewer" {
   name                     = "${var.project_name}-viewer"
   auto_verified_attributes = ["email"]
+  mfa_configuration        = "OPTIONAL"
 
   password_policy {
     minimum_length    = 14
@@ -488,6 +524,10 @@ resource "aws_cognito_user_pool" "viewer" {
     require_numbers   = true
     require_symbols   = true
     require_uppercase = true
+  }
+
+  software_token_mfa_configuration {
+    enabled = true
   }
 }
 
@@ -552,6 +592,22 @@ resource "aws_apigatewayv2_stage" "delivery" {
   api_id      = aws_apigatewayv2_api.delivery.id
   name        = "$default"
   auto_deploy = true
+
+  default_route_settings {
+    throttling_burst_limit = 10
+    throttling_rate_limit  = 5
+  }
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api.arn
+    format = jsonencode({
+      requestId        = "$context.requestId"
+      requestTimeEpoch = "$context.requestTimeEpoch"
+      routeKey         = "$context.routeKey"
+      status           = "$context.status"
+      responseLength   = "$context.responseLength"
+    })
+  }
 }
 
 resource "aws_lambda_permission" "api_gateway_delivery" {
