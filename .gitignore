@@ -14,3 +14,4 @@ crash.log
 *.jpg
 *.jpeg
 *.svg
+!diagrams/aws-healthops-architecture-highres.jpg

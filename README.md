@@ -28,6 +28,10 @@ The editable diagram source is at [diagrams/aws-healthops-architecture.mmd](diag
 
 The deployed resources, their direct AWS Console links, verified proof points, and node-by-node video narration are in [docs/live-aws-console-links.md](docs/live-aws-console-links.md).
 
+![AWS HealthOps high-resolution architecture](diagrams/aws-healthops-architecture-highres.jpg)
+
+*High-resolution architecture diagram. Solid paths are deployed controls; the segmentation and viewer blocks are intentionally labeled as future, on-demand work.*
+
 ```mermaid
 flowchart LR
     H["Healthcare partner"] --> I["Secure intake"] --> Q["Validate and classify"]
