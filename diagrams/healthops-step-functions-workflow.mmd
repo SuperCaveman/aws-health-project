@@ -1,0 +1,36 @@
+%%{init: {'theme':'base','themeVariables': {'background':'#061A2E','primaryTextColor':'#EAF7FF','lineColor':'#8EC9E8','edgeLabelBackground':'#102E50','fontFamily':'Arial'}}}%%
+flowchart LR
+    EVENT["Amazon EventBridge<br/>AWS HealthImaging: Import Job Completed"]
+
+    subgraph SFN["AWS Step Functions — healthops-processing (deployed)"]
+        direction TB
+        START(["Start"])
+        RECORD["RecordProvenance task<br/>Invoke Lambda synchronously<br/>Pass the full event payload"]
+        DONE(["Completed<br/>Succeed"])
+        START --> RECORD
+    end
+
+    LAMBDA["Provenance Lambda<br/>healthops-process-import<br/>Build a non-clinical audit record"]
+    AUDIT[("S3 audit / evidence zone<br/>provenance/{jobId}.json")]
+    SCOPE["Scope boundary<br/>No DICOM import, inference,<br/>diagnosis, or segmentation"]
+
+    EVENT -->|import-complete event| START
+    RECORD -->|invoke| LAMBDA
+    LAMBDA -->|return Lambda payload| DONE
+    LAMBDA -->|write AES-256 audit JSON| AUDIT
+    SCOPE -. applies to .-> SFN
+
+    classDef trigger fill:#DCEEFF,stroke:#2276C9,color:#092E59,stroke-width:2px;
+    classDef workflow fill:#EEE2FF,stroke:#7F4BC7,color:#35105E,stroke-width:2px;
+    classDef compute fill:#DFF5EA,stroke:#218B4B,color:#0D3C20,stroke-width:2px;
+    classDef audit fill:#FFF7CC,stroke:#D4A800,color:#5C4700,stroke-width:2px;
+    classDef boundary fill:#153A58,stroke:#5BB8E6,color:#EAF7FF,stroke-width:2px,stroke-dasharray: 5 3;
+
+    class EVENT trigger;
+    class START,RECORD,DONE workflow;
+    class LAMBDA compute;
+    class AUDIT audit;
+    class SCOPE boundary;
+
+    style SFN fill:#122E58,stroke:#729EEA,color:#EAF7FF,stroke-width:3px
+    linkStyle default stroke:#8EC9E8,stroke-width:2px
