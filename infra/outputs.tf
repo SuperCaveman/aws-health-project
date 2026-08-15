@@ -1,0 +1,11 @@
+output "aws_region" { value = var.aws_region }
+output "inbound_bucket" { value = aws_s3_bucket.zone["inbound"].id }
+output "quarantine_bucket" { value = aws_s3_bucket.zone["quarantine"].id }
+output "clinical_bucket" { value = aws_s3_bucket.zone["clinical"].id }
+output "derived_bucket" { value = aws_s3_bucket.zone["derived"].id }
+output "audit_bucket" { value = aws_s3_bucket.zone["audit"].id }
+output "processing_state_machine_arn" { value = aws_sfn_state_machine.processing.arn }
+output "eventbridge_rule_name" { value = aws_cloudwatch_event_rule.healthimaging_import_complete.name }
+output "viewer_user_pool_id" { value = aws_cognito_user_pool.viewer.id }
+output "delivery_api_endpoint" { value = aws_apigatewayv2_stage.delivery.invoke_url }
+output "budget_name" { value = aws_budgets_budget.healthops.name }

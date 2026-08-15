@@ -2,7 +2,7 @@
 
 Secure healthcare data-exchange infrastructure for a managed-service provider (MSP) onboarding a specialty medical-imaging customer.
 
-> **Status:** Architecture and portfolio-design phase. No AWS resources or real healthcare data have been created or used.
+> **Status:** Lean MVP deployed in `us-east-1`. No real healthcare data or de-identified medical images have been uploaded.
 
 ## The problem
 
@@ -10,7 +10,7 @@ Specialty imaging teams receive medical studies and related healthcare files fro
 
 ## The solution
 
-AWS HealthOps provides a reusable, infrastructure-as-code foundation for secure file intake, data zoning, orchestration, auditability, and controlled delivery. Its first showcase workload takes an appropriate synthetic or de-identified DICOM study through governed storage and processing to an approved 3D visualization asset.
+AWS HealthOps provides a reusable, infrastructure-as-code foundation for secure file intake, data zoning, orchestration, auditability, and controlled delivery. The deployed MVP issues short-lived authenticated upload URLs, performs basic DICOM P10 routing, quarantines invalid inputs, records workflow provenance, and protects approved derived-asset delivery behind Cognito.
 
 The original DICOM study remains in the controlled clinical-data zone. A segmentation and 3D asset are traceable derived outputs; they do not replace the clinical record.
 
@@ -20,11 +20,13 @@ The primary operator is a healthcare MSP/cloud-operations team. Its customer use
 
 ## Demonstrated outcome
 
-An authorized partner can submit a sample imaging study; the platform validates and governs it, records its lineage, processes it into an approved derived asset, and makes only that asset available to an authorized visualization client. An attempt to place source DICOM in the visualization zone is blocked or quarantined and recorded as a policy event.
+An authorized partner can request a five-minute upload URL for a DICOM file. The platform checks the DICOM P10 marker before it routes the file to the clinical-source zone; an invalid `.dcm` is quarantined and recorded as an audit event. HealthImaging import completion then starts a provenance workflow, while the delivery API exposes only approved derived assets to authenticated users.
 
 ## Architecture
 
-The editable diagram source is at [diagrams/aws-healthops-architecture.mmd](diagrams/aws-healthops-architecture.mmd). The design and its key decisions are described in [docs/architecture.md](docs/architecture.md).
+The editable diagram source is at [diagrams/aws-healthops-architecture.mmd](diagrams/aws-healthops-architecture.mmd). The design and its key decisions are described in [docs/architecture.md](docs/architecture.md). Use the [architecture learning map and narration](docs/architecture-learning-map.md) to follow each diagram area through AWS documentation and the portfolio story.
+
+The deployed resources, their direct AWS Console links, verified proof points, and node-by-node video narration are in [docs/live-aws-console-links.md](docs/live-aws-console-links.md).
 
 ```mermaid
 flowchart LR
@@ -43,7 +45,7 @@ flowchart LR
 - Amazon S3 for inbound, quarantine, clinical-source, derived, visualization, audit, and archive zones.
 - Amazon EventBridge, AWS Step Functions, and AWS Lambda for event-driven validation and processing.
 - Amazon API Gateway, Amazon Cognito, and AWS IAM for authenticated, least-privilege delivery.
-- AWS KMS, AWS CloudTrail, Amazon CloudWatch, AWS Config, AWS Security Hub, Amazon GuardDuty, AWS Backup, and AWS Budgets for controls and operations.
+- S3-managed encryption, AWS IAM, AWS CloudTrail event history, Amazon CloudWatch, lifecycle rules, and AWS Budgets for cost-safe controls and operations.
 
 Amazon Bedrock and an on-demand SageMaker/MONAI segmentation workload are explicitly later phases, not MVP dependencies.
 
@@ -56,12 +58,12 @@ Amazon Bedrock and an on-demand SageMaker/MONAI segmentation workload are explic
 
 ## Cost target
 
-The MVP is designed for **$0–$10/month**, with a personal review/teardown ceiling of $20/month. It intentionally excludes always-on AWS Transfer Family SFTP endpoints, NAT Gateways, and persistent ML endpoints. See [docs/cost-guardrails.md](docs/cost-guardrails.md).
+The MVP is designed to remain at or below **$0.05/day** by avoiding persistent endpoints and post-trial security services with a minimum monthly charge. See [docs/cost-guardrails.md](docs/cost-guardrails.md).
 
 ## Portfolio deliverables
 
 - Architecture diagram and decision record.
-- Terraform-based environment (planned).
+- Terraform-based environment (deployed).
 - A short demo showing successful intake, restricted delivery, policy enforcement, and audit trail.
 - A 3–5 minute LinkedIn/portfolio video. See [docs/video-storyboard.md](docs/video-storyboard.md).
 - Future extension: a CDISC-oriented clinical-trial data-reconciliation workload that uses the same governance foundation.
@@ -71,6 +73,6 @@ The MVP is designed for **$0–$10/month**, with a personal review/teardown ceil
 ```text
 diagrams/   Editable architecture diagrams
 docs/       Architecture, cost, and portfolio/demo documentation
-infra/      Terraform implementation (planned)
-app/        Demo application and workflows (planned)
+infra/      Terraform implementation and synthetic test event
+app/        Lambda handlers for intake, routing, provenance, and delivery
 ```

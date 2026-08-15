@@ -1,0 +1,9 @@
+{
+  "source": "healthops.manual-test",
+  "detail-type": "Import Job Completed",
+  "detail": {
+    "jobId": "demo-manual-001",
+    "datastoreId": "00000000000000000000000000000000",
+    "status": "COMPLETED"
+  }
+}

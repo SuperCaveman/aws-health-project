@@ -1,67 +1,68 @@
-flowchart LR
-    subgraph Partners["Healthcare partners"]
-        H["🏥 Hospital PACS<br/>DICOM MRI / CT"]
-        L["🧪 Lab / clinical system<br/>FHIR • EDC • reports"]
-        V["🤝 Vendor / imaging site<br/>secure transfer"]
+flowchart TB
+    subgraph PARTNERS["Healthcare partner"]
+        H["Hospital PACS / imaging team<br/>DICOM MRI or CT"]
+        V["Specialty imaging vendor<br/>secure user access"]
     end
 
-    subgraph AWS["☁️ AWS HealthOps environment"]
-        direction LR
-        subgraph Intake["🟠 1. Secure intake"]
-            ING["Authenticated intake<br/>API Gateway / SFTP"]
+    subgraph AWS["AWS HealthOps - deployed lean MVP"]
+        direction TB
+        subgraph INTAKE["1. Secure intake"]
+            AUTHI["Cognito JWT + HealthOps API<br/>POST /intake/upload-url"]
+            URL["5-minute presigned S3 PUT"]
             IN["S3 inbound zone"]
-            Q["Quarantine + validation<br/>Lambda / Step Functions"]
-            ING --> IN --> Q
+            CHECK["Routing Lambda<br/>.dcm + DICOM P10 marker"]
+            AUTHI --> URL --> IN --> CHECK
         end
-        subgraph Governed["🟢 2. Governed healthcare data"]
-            CLIN["S3 clinical-source zone<br/>encrypted • versioned"]
-            HIM["AWS HealthImaging<br/>DICOM study / series"]
-            AUDIT["Audit / evidence zone<br/>CloudTrail events"]
-            Q --> CLIN --> HIM
+
+        subgraph GOVERNED["2. Governed healthcare data"]
+            CLIN["S3 clinical-source zone<br/>encrypted and versioned"]
+            QUAR["S3 quarantine zone<br/>invalid input isolated"]
+            HIM["AWS HealthImaging datastore<br/>healthops-clinical-imaging"]
+            AUDIT["S3 audit / evidence zone"]
+            CHECK -->|"valid DICOM P10"| CLIN -->|"import when a licensed study is added"| HIM
+            CHECK -->|"invalid or fake .dcm"| QUAR
+            CHECK -. "routing evidence" .-> AUDIT
         end
-        subgraph Processing["🟣 3. Controlled processing"]
-            EVT["EventBridge"]
-            FLOW["Step Functions<br/>processing workflow"]
-            SEG["Segmentation workload<br/>future SageMaker / MONAI"]
-            DER["S3 derived-assets zone<br/>DICOM SEG • GLB • STL"]
-            HIM --> EVT --> FLOW --> SEG --> DER
+
+        subgraph PROCESS["3. Event-driven provenance"]
+            EVT["EventBridge rule<br/>Import Job Completed"]
+            FLOW["Step Functions<br/>healthops-processing"]
+            PROV["Provenance Lambda"]
+            FUTURE["Future on-demand segmentation<br/>approved GLB / STL / SEG"]
+            HIM --> EVT --> FLOW --> PROV --> FUTURE
+            PROV -. "provenance record" .-> AUDIT
         end
-        subgraph Delivery["🟡 4. Controlled delivery"]
-            AUTH["Cognito + IAM<br/>role authorization"]
-            API["HealthOps API"]
-            WEB["Web / clinical viewer"]
-            UE["Unreal visualization<br/>derived assets only"]
-            DER --> API
-            AUTH --> API
-            API --> WEB
-            API --> UE
+
+        subgraph DELIVERY["4. Controlled delivery"]
+            DER["S3 derived-assets zone<br/>approved assets only"]
+            AUTHD["Cognito JWT"]
+            API["HealthOps API<br/>GET /derived/{assetId}"]
+            VIEW["Future web / Unreal viewer<br/>derived assets only"]
+            FUTURE -. "future approved output" .-> DER
+            DER --> API --> VIEW
+            AUTHD --> API
         end
     end
 
-    H --> ING
-    L --> ING
-    V --> ING
+    H --> AUTHI
+    V --> AUTHI
 
-    subgraph Controls["🔵 Control plane across every stage"]
-        TF["Terraform + CI/CD"]
-        SEC["KMS encryption • IAM least privilege<br/>data-zone policy enforcement"]
-        OPS["CloudWatch • Config • Security Hub<br/>GuardDuty • Backup • Budgets"]
+    subgraph CONTROL["Control plane"]
+        TF["Terraform + GitHub Actions"]
+        SEC["S3 managed encryption<br/>IAM least privilege"]
+        OPS["CloudTrail event history<br/>CloudWatch 7-day logs<br/>$1.50 monthly tagged budget"]
     end
-
-    Q -. validation result .-> AUDIT
-    FLOW -. processing provenance .-> AUDIT
-    API -. access event .-> AUDIT
 
     classDef partner fill:#DCEEFF,stroke:#2276C9,color:#092E59,stroke-width:2px;
     classDef intake fill:#FFF0DB,stroke:#E67E22,color:#6B3200,stroke-width:2px;
     classDef governed fill:#DCF4E5,stroke:#218B4B,color:#0D3C20,stroke-width:2px;
-    classDef processing fill:#EEE2FF,stroke:#7F4BC7,color:#35105E,stroke-width:2px;
+    classDef process fill:#EEE2FF,stroke:#7F4BC7,color:#35105E,stroke-width:2px;
     classDef delivery fill:#FFF7CC,stroke:#D4A800,color:#5C4700,stroke-width:2px;
-    classDef controls fill:#D9F2F5,stroke:#16808A,color:#053B41,stroke-width:2px;
+    classDef control fill:#D9F2F5,stroke:#16808A,color:#053B41,stroke-width:2px;
 
-    class H,L,V partner;
-    class ING,IN,Q intake;
-    class CLIN,HIM,AUDIT governed;
-    class EVT,FLOW,SEG,DER processing;
-    class AUTH,API,WEB,UE delivery;
-    class TF,SEC,OPS controls;
+    class H,V partner;
+    class AUTHI,URL,IN,CHECK intake;
+    class CLIN,QUAR,HIM,AUDIT governed;
+    class EVT,FLOW,PROV,FUTURE process;
+    class DER,AUTHD,API,VIEW delivery;
+    class TF,SEC,OPS control;

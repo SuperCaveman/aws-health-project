@@ -9,8 +9,8 @@
 ## Data-flow stages
 
 1. A hospital, imaging site, or vendor submits a DICOM study or related healthcare file through an authenticated intake path.
-2. The object lands in an inbound zone and moves through validation, classification, and policy checks.
-3. Valid source data is retained in a governed clinical zone. DICOM studies are imported into AWS HealthImaging.
+2. The object lands in an inbound zone. A routing Lambda checks for a `.dcm` name and the DICOM P10 `DICM` marker, then classifies it into a clinical or quarantine zone.
+3. Valid source data is retained in a governed clinical zone. A suitable de-identified DICOM study can then be imported into AWS HealthImaging.
 4. HealthImaging import events start a Step Functions workflow using EventBridge.
 5. The workflow creates an approved derived output: initially a precomputed segmentation and GLB/STL/OBJ model; later, an on-demand segmentation workload.
 6. A visualization client calls the HealthOps API. Authentication and authorization are evaluated before it receives time-limited access to approved derived assets.
@@ -24,7 +24,7 @@
 | Quarantine | Failed, suspicious, or policy-violating files | Security/operations staff only |
 | Clinical source | Controlled source healthcare data | Import and processing roles only |
 | Derived | Approved segmentation and transformed outputs | Processing writes; delivery API reads |
-| Visualization | Assets approved for the visualization client | Delivery API only; no direct source-data access |
+| Visualization client | Browser or Unreal consumer of approved transformed assets | Delivery API only; no direct source-data access |
 | Audit | Immutable operational and access evidence | Security/audit roles read; services write |
 | Archive | Long-lived data governed by retention rules | Lifecycle-managed; restricted access |
 
@@ -44,7 +44,7 @@ EventBridge and Step Functions create a visible, retryable workflow between succ
 
 ### Use an MVP-first security model
 
-The first build uses one dedicated demo account, no real PHI, short data retention, and a low budget. Multi-account separation and a fuller landing zone are production reference-design concerns rather than initial implementation requirements.
+The first build uses one dedicated demo account, no real PHI, short data retention, S3-managed encryption, least-privilege roles, CloudTrail event history, CloudWatch logs, and a project-tagged budget. Multi-account separation and a fuller landing zone are production reference-design concerns rather than initial implementation requirements.
 
 ## Related life-sciences extension
 
