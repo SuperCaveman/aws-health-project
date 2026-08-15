@@ -15,3 +15,6 @@ crash.log
 *.jpeg
 *.svg
 !diagrams/aws-healthops-architecture-highres.jpg
+
+# Local operator runbook; it contains live account-specific console links.
+docs/live-aws-console-links.md

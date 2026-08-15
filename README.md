@@ -26,7 +26,7 @@ An authorized partner can request a five-minute upload URL for a DICOM file. The
 
 The editable diagram source is at [diagrams/aws-healthops-architecture.mmd](diagrams/aws-healthops-architecture.mmd). The design and its key decisions are described in [docs/architecture.md](docs/architecture.md). Use the [architecture learning map and narration](docs/architecture-learning-map.md) to follow each diagram area through AWS documentation and the portfolio story.
 
-The deployed resources, their direct AWS Console links, verified proof points, and node-by-node video narration are in [docs/live-aws-console-links.md](docs/live-aws-console-links.md).
+Use the [public console walkthrough and video narration](docs/portfolio-console-walkthrough.md) to follow the architecture without exposing a live AWS account. Account-specific console links are kept in a local operator runbook and are intentionally not part of the public repository.
 
 ![AWS HealthOps high-resolution architecture](diagrams/aws-healthops-architecture-highres.jpg)
 
