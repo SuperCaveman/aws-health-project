@@ -6,7 +6,7 @@ import uuid
 import boto3
 
 s3 = boto3.client("s3")
-SAFE_FILE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,100}\\.dcm$", re.IGNORECASE)
+SAFE_FILE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,100}\.dcm$", re.IGNORECASE)
 
 
 def response(status_code, body):
